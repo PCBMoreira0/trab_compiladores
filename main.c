@@ -2,12 +2,12 @@
 #include "libs/afn.h"
 
 int main() {
-    AFN_State *a = afnCreateSymbol('a');
-    AFN_State *b = afnCreateSymbol('b');
-    AFN_State *unionAB = afnCreateUnion(a, b);
-    
-    // for(Node *state = unionAB->list; state != NULL; state = state->list) {
-    //     printf("Transition character: %c, Is end state: %d\n", state->transitionChar, state->isEndState);
-    // }
+    printf("Compilando Regex: a*\n\n");
+    AFN_Fragment frag_a = afnCreateSymbol('a');
+    AFN_Fragment afn_final = afnCreateKleene(frag_a);
+    afnPrint(afn_final.start);
+    afnFree(afn_final.start);
+
+    printf("Memoria liberada com sucesso!\n");
     return 0;
 }
