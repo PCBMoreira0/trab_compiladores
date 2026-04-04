@@ -77,13 +77,48 @@ void afnFree(AFN_State *state) {
     free(state);
 }
 
-void afnPrint(AFN_State *state, int depth) {
+// --- FUNÇÃO AUXILIAR ---
+// Verifica se um estado já está na lista de visitados
+int isVisited(AFN_State **visited, int visitedCount, AFN_State *state) {
+    for (int i = 0; i < visitedCount; i++) {
+        if (visited[i] == state) return 1; // Já foi visitado
+    }
+    return 0; // Não foi visitado
+}
+
+// --- IMPRESSÃO ---
+void afnPrintRecursive(AFN_State *state, int depth, AFN_State **visited, int *visitedCount) {
     if(state == NULL) return;
+
     for(int i = 0; i < depth; i++) printf("  ");
-    printf("State (isEndState: %d)\n", state->isEndState);
+
+    // Se já visitou, imprime apenas o destino para não entrar em loop infinito
+    if (isVisited(visited, *visitedCount, state)) {
+        printf("State %p (already printed)\n", (void*)state);
+        return;
+    }
+
+    // Adiciona aos visitados
+    visited[*visitedCount] = state;
+    (*visitedCount)++;
+
+    printf("State %p (isEndState: %d)\n", (void*)state, state->isEndState);
+
     for(int i = 0; i < state->transitionCount; i++) {
         for(int j = 0; j < depth + 1; j++) printf("  ");
-        printf("Transition on '%c'\n", state->transitions[i]);
-        afnPrint(state->nextStates[i], depth + 2);
+        
+        // Melhora a visualização do caractere vazio (Epsilon)
+        char tChar = state->transitions[i] == '\0' ? 'E' : state->transitions[i];
+        printf("Transition on '%c' to %p\n", tChar, (void*)state->nextStates[i]);
+        
+        // Chamada recursiva
+        afnPrintRecursive(state->nextStates[i], depth + 2, visited, visitedCount);
     }
+}
+
+void afnPrint(AFN_State *state, int depth) {
+    AFN_State *visited[1000]; // Array simples para rastrear até 1000 estados
+    int visitedCount = 0;
+    printf("\n--- AFN Graph ---\n");
+    afnPrintRecursive(state, depth, visited, &visitedCount);
 }
