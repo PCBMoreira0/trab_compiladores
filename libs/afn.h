@@ -23,11 +23,21 @@ typedef struct {
     AFN_State *end;
 } AFN_Fragment;
 
-AFN_State* afnNewState(int isEndState);
-void afnPrint(AFN_State *start);
+typedef struct {
+    int state_count;             
+    int capacity;
+    AFN_State **allocated_states;
+} AFN_Context;
+
+AFN_Context* afnCreateContext();
+void afnFreeContext(AFN_Context *ctx);
+
+AFN_State* afnNewState(AFN_Context *ctx, int isEndState);
+void afnPrint(AFN_Context *ctx, AFN_State *start);
 void afnFree(AFN_State *start);
 void afnAddTransition(AFN_State *from, char transitionChar, AFN_State *to);
-AFN_Fragment afnCreateSymbol(char character);
-AFN_Fragment afnCreateUnion(AFN_Fragment a, AFN_Fragment b);
-AFN_Fragment afnCreateConcat(AFN_Fragment a, AFN_Fragment b);
-AFN_Fragment afnCreateKleene(AFN_Fragment a);
+
+AFN_Fragment afnCreateSymbol(AFN_Context *ctx, char character);
+AFN_Fragment afnCreateUnion(AFN_Context *ctx, AFN_Fragment a, AFN_Fragment b);
+AFN_Fragment afnCreateConcat(AFN_Context *ctx, AFN_Fragment a, AFN_Fragment b);
+AFN_Fragment afnCreateKleene(AFN_Context *ctx, AFN_Fragment a);
