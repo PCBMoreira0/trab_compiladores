@@ -1,6 +1,7 @@
 #pragma once
 
 #include "linked_list.h"
+#include <stdio.h>
 
 #define MAX_TRANSITIONS 10
 #define EMPTY_STATE_CHAR '\0'

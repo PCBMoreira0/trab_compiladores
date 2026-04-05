@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include "afn.h"
 #include "linked_list.h"
 
