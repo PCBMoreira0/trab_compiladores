@@ -1,5 +1,7 @@
 #pragma once
 
+#include "linked_list.h"
+
 #define MAX_TRANSITIONS 10
 #define EMPTY_STATE_CHAR '\0'
 #define EPSILON_CHAR '\0'
@@ -35,6 +37,9 @@ AFN_State* afnNewState(AFN_Context *ctx, int isEndState);
 void afnPrint(AFN_Context *ctx, AFN_State *start);
 void afnFree(AFN_State *start);
 void afnAddTransition(AFN_State *from, char transitionChar, AFN_State *to);
+
+LinkedList* afnMove(AFN_Context *ctx, LinkedList *current_set, char symbol);
+LinkedList* afnEpsilonClosure(AFN_Context *ctx, LinkedList *current_set);
 
 AFN_Fragment afnCreateSymbol(AFN_Context *ctx, char character);
 AFN_Fragment afnCreateUnion(AFN_Context *ctx, AFN_Fragment a, AFN_Fragment b);

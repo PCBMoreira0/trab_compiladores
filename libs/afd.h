@@ -1,5 +1,6 @@
 #pragma once
 
+#include "linked_list.h"
 #include "afn.h"
 
 #define ALPHABET_SIZE 256 
