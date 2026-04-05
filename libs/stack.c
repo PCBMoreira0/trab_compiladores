@@ -12,11 +12,12 @@ struct Stack {
 
 Stack* stack_create() {
     Stack* s = (Stack*) malloc(sizeof(Stack));
-    s->top = NULL;
+    if (s) s->top = NULL;
     return s;
 }
 
 void stack_push(Stack* s, void* data) {
+    if (!s) return;
     Node* node = (Node*) malloc(sizeof(Node));
     node->data = data;
     node->next = s->top;
@@ -24,7 +25,7 @@ void stack_push(Stack* s, void* data) {
 }
 
 void* stack_pop(Stack* s) {
-    if (s->top == NULL) return NULL;
+    if (s == NULL || s->top == NULL) return NULL;
 
     Node* temp = s->top;
     void* data = temp->data;
@@ -36,11 +37,16 @@ void* stack_pop(Stack* s) {
 }
 
 void* stack_peek(Stack* s) {
-    if (s->top == NULL) return NULL;
+    if (s == NULL || s->top == NULL) return NULL;
     return s->top->data;
 }
 
+int stack_is_empty(Stack* s) {
+    return (s == NULL || s->top == NULL);
+}
+
 void stack_destroy(Stack* s) {
+    if (!s) return;
     while (s->top != NULL) {
         Node* temp = s->top;
         s->top = temp->next;

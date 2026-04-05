@@ -1,8 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "afn.h"
-
-// A variável global_state_id foi completamente removida.
+#include "linked_list.h"
 
 /* ==========================================
  * GERENCIAMENTO DE CONTEXTO
@@ -24,13 +23,8 @@ void afnFreeContext(AFN_Context *ctx) {
 
     for (int i = 0; i < ctx->state_count; i++) {
         AFN_State *s = ctx->allocated_states[i];
+        freeList(s->transitions);
         
-        Node *curr = s->transitions;
-        while (curr) {
-            Node *next = curr->next;
-            free(curr);
-            curr = next;
-        }
         free(s);
     }
     free(ctx->allocated_states);
@@ -47,7 +41,7 @@ AFN_State* afnNewState(AFN_Context *ctx, int isEndState) {
 
     newState->id = ctx->state_count; 
     newState->isEndState = isEndState;
-    newState->transitions = NULL;
+    newState->transitions = createList();
 
     if (ctx->state_count >= ctx->capacity) {
         int new_capacity = ctx->capacity * 2;
@@ -55,7 +49,6 @@ AFN_State* afnNewState(AFN_Context *ctx, int isEndState) {
             ctx->allocated_states, 
             new_capacity * sizeof(AFN_State*)
         );
-        
         if (!temp) {
             free(newState); 
             return NULL;
@@ -71,14 +64,11 @@ AFN_State* afnNewState(AFN_Context *ctx, int isEndState) {
 }
 
 void afnAddTransition(AFN_State *from, char transitionChar, AFN_State *to) {
-    Node *newNode = (Node *)malloc(sizeof(Node));
-    if (!newNode) return;
+    AFN_Transition trans;
+    trans.transitionChar = transitionChar;
+    trans.to = to;
 
-    newNode->transitionChar = transitionChar;
-    newNode->to = to;
-    
-    newNode->next = from->transitions;
-    from->transitions = newNode;
+    from->transitions = insertAtHead(from->transitions, &trans, sizeof(AFN_Transition));
 }
 
 /* ==========================================
@@ -135,6 +125,82 @@ AFN_Fragment afnCreateKleene(AFN_Context *ctx, AFN_Fragment a) {
 }
 
 /* ==========================================
+ * POWER SET CONSTRUCTION (AFN -> AFD)
+ * ========================================== */
+
+LinkedList* afnMove(AFN_Context *ctx, LinkedList *current_set, char symbol){
+    LinkedList *result_set = createList();
+    int *added = (int *)calloc(ctx->state_count, sizeof(int));
+
+    LinkedList *curr_state_node = current_set;
+    while (curr_state_node) {
+        AFN_State *s = *(AFN_State **)curr_state_node->data;
+        
+        LinkedList *trans_node = s->transitions;
+        while (trans_node) {
+            AFN_Transition *trans = (AFN_Transition *)trans_node->data;
+            
+            if (trans->transitionChar == symbol) {
+                AFN_State *dest = trans->to;
+                
+                if (!added[dest->id]) {
+                    added[dest->id] = 1; 
+                    result_set = insertAtHead(result_set, &dest, sizeof(AFN_State*));
+                }
+            }
+            trans_node = trans_node->next;
+        }
+        curr_state_node = curr_state_node->next;
+    }
+    
+    free(added);
+    return result_set;
+}
+
+LinkedList* afnEpsilonClosure(AFN_Context *ctx, LinkedList *current_set) {
+    LinkedList *result_set = createList();
+    int *added = (int *)calloc(ctx->state_count, sizeof(int));
+    LinkedList *stack = createList();
+    LinkedList *curr = current_set;
+
+    while (curr) {
+        AFN_State *s = *(AFN_State **)curr->data;
+        
+        if (!added[s->id]) {
+            added[s->id] = 1;
+            result_set = insertAtHead(result_set, &s, sizeof(AFN_State*));
+            stack = insertAtHead(stack, &s, sizeof(AFN_State*));
+        }
+        curr = curr->next;
+    }
+
+    while (stack != NULL) {
+        AFN_State *s = *(AFN_State **)stack->data;
+        LinkedList *node_to_free = stack;
+        stack = stack->next;
+        free(node_to_free->data);
+        free(node_to_free);
+        LinkedList *trans_node = s->transitions;
+        while (trans_node) {
+            AFN_Transition *trans = (AFN_Transition *)trans_node->data;
+            if (trans->transitionChar == EPSILON_CHAR) {
+                AFN_State *dest = trans->to;
+                
+                if (!added[dest->id]) {
+                    added[dest->id] = 1;
+                    result_set = insertAtHead(result_set, &dest, sizeof(AFN_State*));
+                    stack = insertAtHead(stack, &dest, sizeof(AFN_State*));
+                }
+            }
+            trans_node = trans_node->next;
+        }
+    }
+
+    free(added);
+    return result_set;
+}
+
+/* ==========================================
  * UTILITÁRIOS (DEBUG)
  * ========================================== */
 
@@ -143,18 +209,23 @@ static void afnPrintHelper(AFN_State *state, int *visited) {
     
     visited[state->id] = 1;
     printf("Estado %d %s:\n", state->id, state->isEndState ? "[FINAL]" : "");
-    Node *curr = state->transitions;
+    
+    LinkedList *curr = state->transitions;
     if (!curr) {
         printf("  (sem transições)\n");
     }
+    
     while (curr) {
-        char c = (curr->transitionChar == EPSILON_CHAR) ? 'E' : curr->transitionChar;
-        printf("  --(%c)--> Estado %d\n", c, curr->to->id);
+        AFN_Transition *trans = (AFN_Transition *)curr->data;
+        char c = (trans->transitionChar == EPSILON_CHAR) ? 'E' : trans->transitionChar;
+        printf("  --(%c)--> Estado %d\n", c, trans->to->id);
         curr = curr->next;
     }
+    
     curr = state->transitions;
     while (curr) {
-        afnPrintHelper(curr->to, visited);
+        AFN_Transition *trans = (AFN_Transition *)curr->data;
+        afnPrintHelper(trans->to, visited);
         curr = curr->next;
     }
 }

@@ -1,58 +1,40 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "libs/linked_list.h"
+#include <string.h>
+#include "linked_list.h"
 
+LinkedList *createList(){
+    return NULL;
+}
 
-Node* create_node(AFN_State *data) {
-    Node* new_node = (Node*)malloc(sizeof(Node));
-    if (!new_node) {
-        printf("Erro ao alocar memória\n");
-        exit(1);
+LinkedList* insertAtHead(LinkedList* head, void *data, size_t data_size) {
+    LinkedList* newLinkedList = (LinkedList*)malloc(sizeof(LinkedList));
+    if (!newLinkedList) return NULL;
+
+    newLinkedList->data = malloc(data_size);
+    if (!newLinkedList->data) {
+        free(newLinkedList);
+        return NULL;
     }
-    new_node->data = data;
-    new_node->next = NULL;
-    return new_node;
+    memcpy(newLinkedList->data, data, data_size);
+    
+    newLinkedList->next = head;
+    return newLinkedList;
 }
 
-void insert_front(Node** head, AFN_State *data) {
-    Node* new_node = create_node(data);
-    new_node->next = *head;
-    *head = new_node;
-}
-
-void remove_node(Node** head, AFN_State *data) {
-    Node* current = *head;
-    Node* prev = NULL;
-
-    while (current) {
-        if (current->data == data) {
-            if (prev) {
-                prev->next = current->next;
-            } else {
-                *head = current->next; // Remove o primeiro elemento
-            }
-            free(current);
-            return;
-        }
-        prev = current;
-        current = current->next;
-    }
-}
-
-// void print_list(Node* head) {
-//     Node* current = head;
-//     while (current) {
-//         printf("%d -> ", current->data);
-//         current = current->next;
-//     }
-//     printf("NULL\n");
-// }
-
-void free_list(Node* head) {
-    Node* tmp;
+void freeList(LinkedList* head) {
+    LinkedList* tmp;
     while (head) {
         tmp = head;
         head = head->next;
+        free(tmp->data);
         free(tmp);
+    }
+}
+
+void printList(LinkedList *head, void (*fptr)(void *)) {
+    while (head != NULL) {
+        (*fptr)(head->data);
+        head = head->next;
     }
 }

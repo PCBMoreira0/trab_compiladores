@@ -6,17 +6,16 @@
 
 typedef struct AFN_State AFN_State;
 
-typedef struct Node {
+typedef struct {
     char transitionChar;
     AFN_State *to;
-    struct Node *next;
-} Node;
+} AFN_Transition;
 
-typedef struct AFN_State {
+struct AFN_State {
     int id;
     int isEndState;
-    Node *transitions; 
-} AFN_State;
+    LinkedList *transitions;
+};
 
 typedef struct {
     AFN_State *start;
