@@ -1,0 +1,2 @@
+gcc main.c libs/afn.c libs/linked_list.c libs/stack.c libs/value_stack.c libs/afd.c libs/regular_expression.c libs/queue.c
+./a.out

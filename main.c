@@ -1,40 +1,29 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "libs/afn.h"
 #include "libs/afd.h"
+#include "libs/regular_expression.h"
 
 int main() {
-    printf("====================================================\n");
-    printf(" INICIANDO TESTE: REGEX (a|b)*abb\n");
-    printf("====================================================\n\n");
+    char *er = "(x|y+z)^a+(bc|d)^";
 
+    char *er_pre = ERpreProcess(er);
+    printf("%s\n", er_pre);
     AFN_Context *ctx = afnCreateContext();
     if (!ctx) {
         printf("Erro ao criar o contexto do AFN.\n");
         return 1;
     }
 
-    printf("[*] Construindo o AFN...\n");
-    
-    AFN_Fragment a = afnCreateSymbol(ctx, 'a');
-    AFN_Fragment b = afnCreateSymbol(ctx, 'b');
-    AFN_Fragment a_or_b = afnCreateUnion(ctx, a, b);
+    AFN_Fragment fragment;
+    if (!afnBuildFromER(ctx, er_pre, &fragment)) {
+        printf("Erro ao construir o AFN a partir da ER.\n");
+        return 1;
+    }
 
-    AFN_Fragment kleene = afnCreateKleene(ctx, a_or_b);
+    afnPrint(ctx, fragment.start);
 
-    AFN_Fragment a2 = afnCreateSymbol(ctx, 'a');
-    AFN_Fragment b2 = afnCreateSymbol(ctx, 'b');
-    AFN_Fragment b3 = afnCreateSymbol(ctx, 'b');
-
-    AFN_Fragment concat1 = afnCreateConcat(ctx, kleene, a2);
-    AFN_Fragment concat2 = afnCreateConcat(ctx, concat1, b2);
-    AFN_Fragment final_nfa = afnCreateConcat(ctx, concat2, b3);
-
-    afnPrint(ctx, final_nfa.start);
 
     printf("\n[*] Convertendo AFN para AFD (Subset Construction)...\n");
-    Automato_AFD *dfa = afdBuild(ctx, final_nfa.start);
+    Automato_AFD *dfa = afdBuild(ctx, fragment.start);
     if (!dfa) {
         printf("Erro ao construir o AFD.\n");
         afnFreeContext(ctx);
@@ -47,17 +36,29 @@ int main() {
     printf("====================================================\n");
 
     const char *test_strings[] = {
-        "abb",       // Aceita (mínimo)
-        "aabb",      // Aceita
-        "babb",      // Aceita
-        "ababb",     // Aceita
-        "bbbbabb",   // Aceita
-        "a",         // Rejeita
-        "ab",        // Rejeita
-        "bba",       // Rejeita
-        "abbb",      // Rejeita
-        "abab",      // Rejeita
-        ""           // Rejeita (vazio)
+        // --- ACEITAS ---
+        "a",             // Mínimo obrigatório (Bloco 2 apenas)
+        "aaa",           // Bloco 2 com múltiplas repetições
+        "xa",            // Bloco 1 (x) + Bloco 2 (a)
+        "yza",           // Bloco 1 (y+z) + Bloco 2 (a)
+        "yyyza",         // Bloco 1 (vários y + z) + Bloco 2 (a)
+        "xyza",          // Bloco 1 (x e depois yz) + Bloco 2 (a)
+        "abc",           // Bloco 2 (a) + Bloco 3 (bc)
+        "ad",            // Bloco 2 (a) + Bloco 3 (d)
+        "abcbcdd",       // Bloco 2 (a) + Bloco 3 (bc, bc, d, d)
+        "xyyzaaabcbc",   // Complexa: Bloco 1 (x, yyz), Bloco 2 (aaa), Bloco 3 (bc, bc)
+
+        // --- REJEITADAS ---
+        "x",             // Rejeita: Falta o Bloco 2 (a+) que é obrigatório
+        "bc",            // Rejeita: Falta o Bloco 2 (a+)
+        "ya",            // Rejeita: Bloco 1 incompleto (y+ exige um z depois)
+        "yzza",          // Rejeita: Bloco 1 inválido (z não tem operador +, apenas um é permitido)
+        "ab",            // Rejeita: Bloco 3 incompleto (esperava bc, recebeu apenas b)
+        "acb",           // Rejeita: Bloco 3 com ordem errada (esperava bc)
+        "ax",            // Rejeita: 'x' só pode vir antes do 'a' (no Bloco 1)
+        "y+za",          // Rejeita: O símbolo '+' é um operador, não um literal
+        "",              // Rejeita: String vazia não satisfaz a obrigatoriedade de a+
+        "xyz"            // Rejeita: Falta o caractere 'a'
     };
     
     int num_tests = sizeof(test_strings) / sizeof(test_strings[0]);
