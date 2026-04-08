@@ -1,8 +1,11 @@
-#include "libs/afn_builder.h"
+#include "libs/afn.h"
 #include "libs/afd.h"
+#include "libs/regular_expression.h"
 
 int main() {
-    char *er = "a*b";
+    char *er = "(a|b)*&a&b&b";
+
+    char *er_posfixa = shuntingYard(er);
 
     AFN_Context *ctx = afnCreateContext();
     if (!ctx) {
@@ -11,7 +14,7 @@ int main() {
     }
 
     AFN_Fragment fragment;
-    if (!afnBuildFromER(ctx, er, &fragment)) {
+    if (!afnBuildFromER(ctx, er_posfixa, &fragment)) {
         printf("Erro ao construir o AFN a partir da ER.\n");
         return 1;
     }
@@ -33,11 +36,17 @@ int main() {
     printf("====================================================\n");
 
     const char *test_strings[] = {
-        "a",       
-        "aa",        
-        "ab",        
-        "b", 
-        "aaaab",      
+        "abb",       // Aceita (mínimo)
+        "aabb",      // Aceita
+        "babb",      // Aceita
+        "ababb",     // Aceita
+        "bbbbabb",   // Aceita
+        "a",         // Rejeita
+        "ab",        // Rejeita
+        "bba",       // Rejeita
+        "abbb",      // Rejeita
+        "abab",      // Rejeita
+        ""           // Rejeita (vazio)
     };
     
     int num_tests = sizeof(test_strings) / sizeof(test_strings[0]);

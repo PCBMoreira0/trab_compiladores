@@ -46,3 +46,4 @@ AFN_Fragment afnCreateSymbol(AFN_Context *ctx, char character);
 AFN_Fragment afnCreateUnion(AFN_Context *ctx, AFN_Fragment a, AFN_Fragment b);
 AFN_Fragment afnCreateConcat(AFN_Context *ctx, AFN_Fragment a, AFN_Fragment b);
 AFN_Fragment afnCreateKleene(AFN_Context *ctx, AFN_Fragment a);
+int afnBuildFromER(AFN_Context *ctx, const char *regex, AFN_Fragment *out_fragment);

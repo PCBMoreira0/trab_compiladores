@@ -2,7 +2,7 @@
 #include "stack.h"
 
 typedef struct Node {
-    void* data;
+    const void* data;
     struct Node* next;
 } Node;
 
@@ -16,7 +16,7 @@ Stack* stack_create() {
     return s;
 }
 
-void stack_push(Stack* s, void* data) {
+void stack_push(Stack* s, const void* data) {
     if (!s) return;
     Node* node = (Node*) malloc(sizeof(Node));
     node->data = data;
@@ -24,11 +24,11 @@ void stack_push(Stack* s, void* data) {
     s->top = node;
 }
 
-void* stack_pop(Stack* s) {
+const void* stack_pop(Stack* s) {
     if (s == NULL || s->top == NULL) return NULL;
 
     Node* temp = s->top;
-    void* data = temp->data;
+    const void* data = temp->data;
 
     s->top = temp->next;
     free(temp);
@@ -36,7 +36,7 @@ void* stack_pop(Stack* s) {
     return data;
 }
 
-void* stack_peek(Stack* s) {
+const void* stack_peek(Stack* s) {
     if (s == NULL || s->top == NULL) return NULL;
     return s->top->data;
 }
