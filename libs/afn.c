@@ -6,8 +6,8 @@
 
 #define CONCAT_OPERATOR '&'
 #define UNION_OPERATOR '|'
-#define KLEENE_OPERATOR '*'
-#define PLUS_KLEENE_OPERATOR '^'
+#define KLEENE_OPERATOR '^'
+#define PLUS_KLEENE_OPERATOR '+'
 
 /* ==========================================
  * GERENCIAMENTO DE CONTEXTO

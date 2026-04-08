@@ -1,6 +1,7 @@
 #include "stack.h"
 #include "queue.h"
 #include <stdlib.h>
+#include <string.h>
 
 int getOpPrecedence(char op){
     switch (op)
@@ -30,7 +31,7 @@ int isOperator(char ex){
     }
 }
 
-char *shuntingYard(const char *expression, int *outputSize){
+char *shuntingYard(const char *expression){
     Stack *operatorStack = stack_create();
     Queue *outputQueue = queue_create();
 
@@ -91,4 +92,36 @@ char *shuntingYard(const char *expression, int *outputSize){
     queue_destroy(outputQueue);
 
     return outputString;
+}
+
+char *ERpreProcess(char *expression){
+    // (a|b)*abb
+    char *output = malloc(sizeof(char) * strlen(expression) * 2);
+    output[0] = expression[0];
+    char lastChar = expression[0];
+    int i, j;
+    for(i = 1, j = 1; expression[i] != '\0'; i++, j++){
+        if(!isOperator(expression[i]) && expression[i] != '(' && expression[i] != ')'){
+            if(lastChar == '^' || lastChar == '+' || lastChar == ')'){
+                output[j++] = '&';
+            }
+            else if(!isOperator(lastChar) && lastChar != '(' && lastChar != ')'){
+                output[j++] = '&';
+            }
+        }   
+        else if(expression[i] == '('){
+            if((!isOperator(lastChar) && lastChar != '(' && lastChar != ')') || lastChar == ')' || lastChar == '+' || lastChar == '^'){
+                output[j++] = '&';
+            }
+        }
+
+        lastChar = expression[i];
+        output[j] = expression[i];
+    }
+
+    output[j] = '\0';
+
+    char *final_output = shuntingYard(output);
+    free(output);
+    return final_output;
 }
