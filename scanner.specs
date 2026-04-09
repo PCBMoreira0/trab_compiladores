@@ -1,0 +1,56 @@
+# Parsing deste arquivo de specs:
+# 1. " -> " separa o TOKEN da EXPRESSÃO REGULAR (Ex.: "TOKEN,EXPRESSÃO_REGULAR # Um comentário qualquer\n");
+# 2. Quebra de linha significa a leitura de um NOVO TOKEN;
+# 3. Comentários começam com #, deve desprezar tudo até o fim da linha;
+# 4. \ serve para identificar os caracteres especiais (ainda não está claro quais são).
+# 5. Estou criando uma seção para definir macros que facilitam na criação das regras;
+# 6. Um macro segue a mesma regra de atribuição, mas começa com $ e NÃO SERÁ USADO COMO TOKEN;
+
+# Macros:
+$EPSILON -> ""
+
+$DIGITO -> [0-9]
+$D8      -> 0|1|2|3|4|5|6|7
+$D16     -> $DIGITO|a|b|c|d|e|f|A|B|C|D|E|F
+$D16_2   -> $D16$D16
+$D16_3   -> $D16_2$D16
+$D16_4   -> $D16_2$D16_2
+$D16_8   -> $D16_4$D16_4
+
+$LETRA -> [a-zA-Z]
+$ALFANUM -> [a-zA-Z0-9]
+$SYMBOL -> [+-*=/<>?!:$%^&_~@.]
+$EXATIDAO -> #e|#i
+$SINAL -> +|-
+$RACIONAL_UNSIGNED -> [0-9]+(/[0-9]+|$EPSILON)
+$RACIONAL_EXATO -> ($SINAL|$EPSILON)$RACIONAL_UNSIGNED
+$COMPLEXO_EXATO -> ($RACIONAL_EXATO|$EPSILON)$SINAL($RACIONAL_UNSIGNED|$EPSILON)i
+
+$CORPO_ESC -> (a|b|t|n|v|f|r|e|\"|\'|\\|$D8|$D8$D8|$D8$D8$D8|x($D16|$D16_2)|u($D16|$D16_2|$D16_3|$D16_4|$D16_4\u$D16_4)|U($D16|$D16_2|$D16_3|$D16_4|$D16_4$D16|$D16_4$D16_2|$D16_4$D16_3|$D16_8)|\n|\r|\r\n)
+
+# Expressões:
+
+WHITESPACE -> [ \t\n\r]+
+COMMENT -> ;.*
+
+LPAREN -> \(
+RPAREN -> \)
+LBRACKET -> \[
+RBRACKET -> \]
+LBRACE -> \{
+RBRACE -> \}
+
+BOOL_TRUE -> #true|#t|#T
+BOOL_FALSE -> #false|#f|#F
+
+KEYWORD_IF -> if
+KEYWORD_DEF -> define
+NUMBER -> $RACIONAL_EXATO|$COMPLEXO_EXATO # Por enquanto os números estão definidos apenas como exatos
+ID -> $EPSILON # incompleto ainda
+STRING -> "($ALFANUM|$SYMBOL|\\$CORPO_ESC)*"
+
+DOT -> \.
+QUOTE -> \'
+QUASIQUOTE -> `
+UNQUOTE_SPLICING -> ,@
+UNQUOTE -> ,
