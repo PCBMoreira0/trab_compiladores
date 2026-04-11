@@ -47,6 +47,7 @@ AFN_State* afnNewState(AFN_Context *ctx, int isEndState) {
 
     newState->id = ctx->state_count; 
     newState->isEndState = isEndState;
+    newState->token = (ERToken){.value = "", .type = TOKEN_EMPTY, .priority = 0};
     newState->transitions = createList();
 
     if (ctx->state_count >= ctx->capacity) {
@@ -127,6 +128,17 @@ AFN_Fragment afnCreateKleene(AFN_Context *ctx, AFN_Fragment a) {
     a.end->isEndState = 0;
 
     AFN_Fragment frag = {start, end};
+    return frag;
+}
+
+AFN_Fragment afnUnify(AFN_Context *ctx, AFN_Fragment *list, int listSize){
+    AFN_State *start = afnNewState(ctx, 0);
+
+    for (int i = 0; i < listSize; i++) {
+        afnAddTransition(start, EPSILON_CHAR, list[i].start);
+    }
+
+    AFN_Fragment frag = {start, NULL};
     return frag;
 }
 
@@ -247,8 +259,9 @@ void afnPrint(AFN_Context *ctx, AFN_State *start) {
     printf("------------------------\n\n");
 }
 
-int afnBuildFromER(AFN_Context *ctx, const char *regex, AFN_Fragment *out_fragment) {
+int afnBuildFromER(AFN_Context *ctx, ERToken token, AFN_Fragment *out_fragment) {
     ValueStack *stack = value_stack_create(sizeof(AFN_Fragment));
+    char *regex = token.value;
     for(int i = 0; regex[i] != '\0'; i++) {
         char c = regex[i];
         
@@ -295,6 +308,7 @@ int afnBuildFromER(AFN_Context *ctx, const char *regex, AFN_Fragment *out_fragme
         return 0; // ER inválida, mais de um fragmento restante
     }
     
+    result.end->token = token;
     *out_fragment = result;
     return 1; // Retornar o fragmento do AFN construído
 }

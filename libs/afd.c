@@ -85,11 +85,14 @@ Automato_AFD* afdBuild(AFN_Context *ctx, AFN_State *start_nfa_state) {
         LinkedList *current_set = item->nfa_states;
 
         LinkedList *curr_nfa = current_set;
+        ERToken curr_token = {0};
         while (curr_nfa) {
             AFN_State *s = *(AFN_State **)curr_nfa->data;
             if (s->isEndState) {
-                dfa->is_final[current_id] = 1;
-                break; 
+                if(dfa->is_final[current_id] == 0 || s->token.priority > curr_token.priority) {
+                    dfa->is_final[current_id] = s->token.type;
+                    curr_token = s->token;
+                }
             }
             curr_nfa = curr_nfa->next;
         }
