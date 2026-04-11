@@ -29,7 +29,16 @@ int main() {
         afnFreeContext(ctx);
         return 1;
     }
+
+    printf("[*] Antes da minimização:\n");
+    afdPrint(dfa);
+
     printf("[+] AFD criado com sucesso com %d estados.\n", dfa->num_states);
+
+    printf("\n[*] Minimizando o AFD...\n");
+    Automato_AFD *minimized_dfa = afdMinimize(dfa);
+    afdPrint(minimized_dfa);
+    printf("[+] AFD minimizado criado com sucesso com %d estados.\n", minimized_dfa->num_states);
 
     printf("\n====================================================\n");
     printf(" TESTANDO STRINGS NO AFD\n");
@@ -64,7 +73,7 @@ int main() {
     int num_tests = sizeof(test_strings) / sizeof(test_strings[0]);
 
     for (int i = 0; i < num_tests; i++) {
-        int accepted = run_dfa(dfa, test_strings[i]);
+        int accepted = run_dfa(minimized_dfa, test_strings[i]);
         printf("String: %-10s -> %s\n", 
             strcmp(test_strings[i], "") == 0 ? "\"\"" : test_strings[i], 
             accepted ? "[ACEITO]" : "[REJEITADO]");
@@ -72,6 +81,7 @@ int main() {
 
     printf("\n[*] Liberando memoria...\n");
     afdFree(dfa);
+    afdFree(minimized_dfa);
     afnFreeContext(ctx);
     printf("[+] Fim do teste.\n");
 

@@ -21,3 +21,5 @@ int afdFindSignatureIndex(AFN_Context *ctx, int *new_signature, int **known_sign
 Automato_AFD* afdBuild(AFN_Context *ctx, AFN_State *start_nfa_state);
 
 void afdFree(Automato_AFD *dfa);
+void afdPrint(Automato_AFD *dfa);
+Automato_AFD *afdMinimize(Automato_AFD *afd);

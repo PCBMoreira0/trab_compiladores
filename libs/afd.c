@@ -157,3 +157,163 @@ void afdFree(Automato_AFD *dfa) {
     free(dfa->is_final);
     free(dfa);
 }
+
+
+void afdPrint(Automato_AFD *dfa) {
+    if (!dfa) return;
+
+    printf("AFD:\n");
+    printf("Estado Inicial: %d\n", dfa->initial_state);
+    printf("Estados Finais: ");
+    for (int i = 0; i < dfa->num_states; i++) {
+        if (dfa->is_final[i]) {
+            printf("%d ", i);
+        }
+    }
+    printf("\nTransições:\n");
+    for (int i = 0; i < dfa->num_states; i++) {
+        for (int c = 0; c < ALPHABET_SIZE; c++) {
+            if (dfa->transitions[i][c] != STATE_DEAD) {
+                printf("  Estado %d --%c--> Estado %d\n", i, c, dfa->transitions[i][c]);
+            }
+        }
+    }
+}
+
+
+Automato_AFD *afdMinimize(Automato_AFD *afd){
+    // Inicialização
+    int **table = malloc(sizeof(int *) * (afd->num_states + 1)); // + 1 para criar o estado morto
+    for(int i = 0; i < afd->num_states + 1; i++){
+        table[i] = calloc(afd->num_states + 1, sizeof(int));
+    }
+
+    // Marcando estados finais e não finais (estado morto nunca é final)
+    int tableDeadIndex = afd->num_states;
+    for(int i = 0; i < afd->num_states + 1; i++){
+        for(int j = 0; j < afd->num_states + 1; j++){
+            if(i == j || i > j) continue;
+
+            if(i == tableDeadIndex && j == tableDeadIndex) continue;
+
+            if(i == tableDeadIndex){
+                if(afd->is_final[j]){
+                    table[i][j] = 1;
+                }
+            }else if(j == tableDeadIndex){
+                if(afd->is_final[i]){
+                    table[i][j] = 1;
+                }
+            }else{
+                if(afd->is_final[i] != afd->is_final[j]){
+                    table[i][j] = 1;
+                }
+            }
+        }
+    }
+
+    // Marcando estados distinguíveis adicionais
+    int marked = 1;
+    while(marked){
+        marked = 0;
+        for(int i = 0; i < afd->num_states; i++){
+            for(int j = 0; j < afd->num_states; j++){
+                if(i == j || i > j) continue;
+
+                int isMarked = table[i][j];
+
+                if(!isMarked){
+                    for(int c = 0; c < ALPHABET_SIZE; c++){
+
+                        int tState1 = afd->transitions[i][c];
+                        int tState2 = afd->transitions[j][c];
+
+                        if(tState1 == STATE_DEAD) tState1 = tableDeadIndex;
+                        if(tState2 == STATE_DEAD) tState2 = tableDeadIndex;
+
+                        int tStateIsMarked;
+                        if(tState1 > tState2) tStateIsMarked = table[tState2][tState1];
+                        else tStateIsMarked = table[tState1][tState2];
+
+                        if(tStateIsMarked){
+                            table[i][j] = 1;
+                            marked = 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Combinando os estados restantes
+    int *visited = calloc(afd->num_states, sizeof(int));
+    int *combined = malloc(sizeof(int) * afd->num_states);
+
+    int stateCount = 0;
+    for(int i = 0; i < afd->num_states; i++){
+        int marked = 0;
+        for(int j = 0; j < afd->num_states; j++){
+            if(i == j || i > j) continue;
+
+            
+            if(!table[i][j]){
+                if(visited[i]){
+                    combined[j] = combined[i];
+                    visited[j] = 1;
+                }
+                else{
+                    combined[i] = stateCount;
+                    combined[j] = stateCount;
+                    visited[i] = 1;
+                    visited[j] = 1;
+                    stateCount++;
+                }
+                marked = 1;
+            }
+        }
+
+        if(!marked && !visited[i]){
+            combined[i] = stateCount++;
+            visited[i] = 1;
+        }
+    }
+
+    free(visited);
+
+    for(int i = 0; i < afd->num_states; i++){
+        free(table[i]);
+    }
+    free(table);
+
+    // Criando nova tabela de transição
+    int **transitions = malloc(sizeof(int *) * afd->num_states);
+    for(int i = 0; i < afd->num_states; i++){
+        transitions[i] = malloc(ALPHABET_SIZE * sizeof(int));
+    }
+
+    for(int i = 0; i < afd->num_states; i++){
+        for(int j = 0; j < ALPHABET_SIZE; j++){
+            transitions[i][j] = STATE_DEAD;
+        }
+    }
+
+    int *isFinal = calloc(stateCount, sizeof(int));
+
+    for(int i = 0; i < afd->num_states; i++){
+        for(int j = 0; j < ALPHABET_SIZE; j++){
+            if(afd->transitions[i][j] == STATE_DEAD) continue;
+            transitions[combined[i]][j] = combined[afd->transitions[i][j]];
+        }
+
+        isFinal[combined[i]] = afd->is_final[i];
+    }
+
+    Automato_AFD *newAfd = malloc(sizeof(Automato_AFD));
+    newAfd->initial_state = combined[afd->initial_state];
+    newAfd->num_states = stateCount;
+    newAfd->transitions = transitions;
+    newAfd->is_final = isFinal;
+
+    free(combined);
+    return newAfd;
+}
