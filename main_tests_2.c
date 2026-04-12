@@ -3,37 +3,25 @@
 #include "libs/regular_expression.h"
 
 int main() {
-    char *er = "if";
-    char *er2 = "(a|b|i|f)^";
-    char *er3 = "(0|1|2|3|4|5|6|7|8|9)^";
- 
-    char *er_pre = ERpreProcess(er);
-    char *er_pre2 = ERpreProcess(er2);
-    char *er_pre3 = ERpreProcess(er3);
-    printf("%s\n", er_pre);
-    printf("%s\n", er_pre2);
-    printf("%s\n", er_pre3);
+
+    // LISTA DE EXPRESSÕES REGULARES
+    ERToken ers[] = {
+        {"if", TOKEN_IF, 1},
+        {"([a-z]|[A-Z])+", TOKEN_IDENTIFIER, 0},
+        {"[0-9]^", TOKEN_INT, 0},
+        {"([0-9])^(.[0-9]+|E([0-9]|(-[0-9])))^", TOKEN_FLOAT, 0}
+    };
+    
+    AFN_Fragment fragments[4];
     AFN_Context *ctx = afnCreateContext();
-    if (!ctx) {
-        printf("Erro ao criar o contexto do AFN.\n");
-        return 1;
+    for(int i = 0; i < 4; i++){
+        ers[i].value = ERpreProcess(expandIntervals(ers[i].value));
+        AFN_Fragment f;
+        afnBuildFromER(ctx, ers[i], &f);
+        fragments[i] = f;
     }
 
-    ERToken token = {er_pre, TOKEN_IF, 1};
-    ERToken token2 = {er_pre2, TOKEN_IDENTIFIER, 0};
-    ERToken token3 = {er_pre3, TOKEN_NUMBER, 0};
-    AFN_Fragment fragment;
-    afnBuildFromER(ctx, token, &fragment);
-
-    AFN_Fragment fragment2;
-    afnBuildFromER(ctx, token2, &fragment2);
-    
-
-    AFN_Fragment fragment3;
-    afnBuildFromER(ctx, token3, &fragment3);
-
-    AFN_Fragment fragments[] = {fragment, fragment2, fragment3};
-    AFN_Fragment unified = afnUnify(ctx, fragments, 3);
+    AFN_Fragment unified = afnUnify(ctx, fragments, 4);
 
     afnPrint(ctx, unified.start);
 
@@ -61,20 +49,28 @@ int main() {
     printf("====================================================\n");
 
     const char *test_strings[] = {
-        // --- ACEITAS ---
-        "a",             // Mínimo obrigatório (Bloco 2 apenas)
-        "aaa",           // Bloco 2 com múltiplas repetições
-        "ba",            // Bloco 1 (x) + Bloco 2 (a)
-        "ifa",           // Bloco 1 (y+z) + Bloco 2 (a)
-        "ifififa",         // Bloco 1 (vários y + z) + Bloco 2 (a)
-        "bbbbif",          // Bloco 1 (x e depois yz) + Bloco 2 (a)
-        "if",           // Bloco 2 (a) + Bloco 3 (bc)
+        "a",            
+        "aaa",          
+        "ba",           
+        "ifa",          
+        "ifififa",      
+        "bbbbif",       
+        "if",
+        "if",
+        "if",
         "i",
         "f",
         "1",
-        "1235",
-        "5043",
-        "26",
+        "1.23",
+        "156.3253",
+        ".234",
+        "12.45E-2",
+        "1.564E5",
+        "1E-2",
+        "xvjxbvdsboehb",
+        "132454",
+        "12",
+        "3753",
     };
     
     int num_tests = sizeof(test_strings) / sizeof(test_strings[0]);
@@ -83,7 +79,8 @@ int main() {
         "NONE",
         "TOKEN_IF",
         "TOKEN_ID",
-        "TOKEN_NUM"
+        "TOKEN_INT",
+        "TOKEN_FLOAT"
     };
     for (int i = 0; i < num_tests; i++) {
         int accepted = run_dfa(minimized_dfa, test_strings[i]);

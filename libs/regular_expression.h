@@ -4,7 +4,8 @@ typedef enum ERTokenType {
     TOKEN_EMPTY,
     TOKEN_IF,
     TOKEN_IDENTIFIER,
-    TOKEN_NUMBER
+    TOKEN_INT,
+    TOKEN_FLOAT,
 } ERTokenType;
 
 typedef struct ERToken {
@@ -15,3 +16,4 @@ typedef struct ERToken {
 
 char *shuntingYard(const char *expression);
 char *ERpreProcess(char *expression);
+char* expandIntervals(const char* er);

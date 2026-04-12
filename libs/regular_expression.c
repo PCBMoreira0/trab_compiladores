@@ -94,8 +94,43 @@ char *shuntingYard(const char *expression){
     return outputString;
 }
 
+char* expandIntervals(const char* er) {
+    size_t capacidade = strlen(er) * 10 + 10; 
+    char* resultado = (char*)malloc(capacidade);
+    if (!resultado) return NULL;
+
+    int j = 0;
+    for (int i = 0; er[i] != '\0'; i++) {
+        if (er[i] == '[' && 
+            er[i+1] != '\0' && 
+            er[i+2] == '-' && 
+            er[i+3] != '\0' && 
+            er[i+4] == ']') {
+            
+            char inicio = er[i+1];
+            char fim = er[i+3];
+
+            resultado[j++] = '(';
+            
+            for (char c = inicio; c <= fim; c++) {
+                resultado[j++] = c;
+                if (c < fim) {
+                    resultado[j++] = '|';
+                }
+            }
+            
+            resultado[j++] = ')';
+            i += 4; 
+        } else {
+            resultado[j++] = er[i];
+        }
+    }
+    
+    resultado[j] = '\0';
+    return resultado;
+}
+
 char *ERpreProcess(char *expression){
-    // (a|b)*abb
     char *output = malloc(sizeof(char) * strlen(expression) * 2);
     output[0] = expression[0];
     char lastChar = expression[0];
