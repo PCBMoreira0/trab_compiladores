@@ -320,3 +320,46 @@ Automato_AFD *afdMinimize(Automato_AFD *afd){
     free(combined);
     return newAfd;
 }
+
+
+void AFDSerialize(Automato_AFD *afd, FILE *file) {
+    if (afd == NULL || file == NULL) return;
+
+    fwrite(&afd->initial_state, sizeof(int), 1, file);
+    fwrite(&afd->num_states, sizeof(int), 1, file);
+
+    if (afd->num_states > 0) {
+        fwrite(afd->is_final, sizeof(int), afd->num_states, file);
+
+        for (int i = 0; i < afd->num_states; i++) {
+            fwrite(afd->transitions[i], sizeof(int), ALPHABET_SIZE, file);
+        }
+    }
+}
+
+Automato_AFD *AFDDeserialize(FILE *file) {
+    if (file == NULL) return NULL;
+
+    Automato_AFD *afd = (Automato_AFD *)malloc(sizeof(Automato_AFD));
+    if (afd == NULL) return NULL;
+
+    fread(&afd->initial_state, sizeof(int), 1, file);
+    fread(&afd->num_states, sizeof(int), 1, file);
+
+    if (afd->num_states > 0) {
+        afd->is_final = (int *)malloc(afd->num_states * sizeof(int));
+        fread(afd->is_final, sizeof(int), afd->num_states, file);
+
+        afd->transitions = (int **)malloc(afd->num_states * sizeof(int *));
+        for (int i = 0; i < afd->num_states; i++) {
+            afd->transitions[i] = (int *)malloc(ALPHABET_SIZE * sizeof(int));
+            fread(afd->transitions[i], sizeof(int), ALPHABET_SIZE, file);
+        }
+    } else {
+        afd->is_final = NULL;
+        afd->transitions = NULL;
+    }
+
+    return afd;
+}
+

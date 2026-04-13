@@ -23,3 +23,5 @@ Automato_AFD* afdBuild(AFN_Context *ctx, AFN_State *start_nfa_state);
 void afdFree(Automato_AFD *dfa);
 void afdPrint(Automato_AFD *dfa);
 Automato_AFD *afdMinimize(Automato_AFD *afd);
+void AFDSerialize(Automato_AFD *afd, FILE *file);
+Automato_AFD *AFDDeserialize(FILE *file);
