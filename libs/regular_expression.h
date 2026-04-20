@@ -1,5 +1,7 @@
 #pragma once
 
+#define EPSILON_BYTE (unsigned char) 2
+
 typedef enum ERTokenType {
     TOKEN_EMPTY = 0,
     TOKEN_LPAREN,

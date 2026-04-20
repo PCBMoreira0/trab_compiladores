@@ -9,6 +9,7 @@
 
 #define MAX_TOKENS 100
 
+
 int main() {
     ERToken ers[MAX_TOKENS];
     printf("[*] Lendo arquivo de definicao lexica 'racket.lex'...\n");
@@ -91,8 +92,8 @@ int main() {
         "\"string_com-simbolos!\"", // String com caracteres permitidos
         
         // --- NÚMEROS ---
-        "0", "12345",     // Inteiros
-        "0.0", "3.14159", // Ponto flutuante
+        "0", "12345", "-42",     // Inteiros
+        "0.0", "-3.14159", // Ponto flutuante
         
         // --- WHITESPACE ---
         " ", "\t", "\n", "\r",

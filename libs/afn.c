@@ -83,12 +83,14 @@ void afnAddTransition(AFN_State *from, char transitionChar, AFN_State *to) {
  * ========================================== */
 
 AFN_Fragment afnCreateSymbol(AFN_Context *ctx, char character) {
-    character = character & 0x7F;
-
     AFN_State *start = afnNewState(ctx, 0);
     AFN_State *end = afnNewState(ctx, 1);
 
-    afnAddTransition(start, character, end);
+    if ((unsigned char)character == EPSILON_BYTE) {
+        afnAddTransition(start, EPSILON_CHAR, end);
+    } else {
+        afnAddTransition(start, character & 0x7F, end);
+    }
 
     AFN_Fragment frag = {start, end};
     return frag;

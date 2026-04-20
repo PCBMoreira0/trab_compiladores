@@ -150,6 +150,7 @@ char *ERpreProcess(char *expression){
             if (next == 'n') { curr = '\n'; i++; }
             else if (next == 't') { curr = '\t'; i++; }
             else if (next == 'r') { curr = '\r'; i++; }
+            else if (next == 'e') { curr = EPSILON_BYTE; i++; }
             else {
                 curr = next | 0x80; 
                 i++; 
