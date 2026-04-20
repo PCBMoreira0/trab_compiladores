@@ -83,6 +83,8 @@ void afnAddTransition(AFN_State *from, char transitionChar, AFN_State *to) {
  * ========================================== */
 
 AFN_Fragment afnCreateSymbol(AFN_Context *ctx, char character) {
+    character = character & 0x7F;
+
     AFN_State *start = afnNewState(ctx, 0);
     AFN_State *end = afnNewState(ctx, 1);
 

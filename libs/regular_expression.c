@@ -1,34 +1,31 @@
 #include "stack.h"
 #include "queue.h"
+#include "regular_expression.h"
 #include <stdlib.h>
 #include <string.h>
 
 int getOpPrecedence(char op){
     switch (op)
     {
+    case '*':
+    case '?':
     case '^':
     case '+':
         return 2;
-        break;
     case '&':
         return 1;
-        break;
     case '|':
         return 0;
-        break;
     default:
         return -1;
-        break;
     }
 }
 
 int isOperator(char ex){
-    if(ex == '^' || ex == '&' || ex == '+' || ex == '|'){
+    if(ex == '*' || ex == '?' || ex == '^' || ex == '&' || ex == '+' || ex == '|'){
         return 1;
     }
-    else{
-        return 0;
-    }
+    return 0;
 }
 
 char *shuntingYard(const char *expression){
@@ -37,13 +34,12 @@ char *shuntingYard(const char *expression){
 
     for(int i = 0; expression[i] != '\0'; i++){   
         if(expression[i] == '('){
-            stack_push(operatorStack, &expression[i]);
+            stack_push(operatorStack, (void*)&expression[i]);
         }
         else if(expression[i] == ')'){
             while(!stack_is_empty(operatorStack)){
                 char *op = (char *) stack_pop(operatorStack);
                 if(*op == '(') break;
-
                 queue_enqueue(outputQueue, op);
             }
         }
@@ -52,7 +48,7 @@ char *shuntingYard(const char *expression){
             if(!stack_is_empty(operatorStack)){
                 char peek = *(char *) stack_peek(operatorStack);
                 if(peek == '('){
-                    stack_push(operatorStack, &expression[i]);
+                    stack_push(operatorStack, (void*)&expression[i]);
                     continue;
                 }
                 while(getOpPrecedence(expression[i]) <= getOpPrecedence(peek)){
@@ -66,11 +62,10 @@ char *shuntingYard(const char *expression){
                     }
                 }
             }
-
-            stack_push(operatorStack, &expression[i]);
+            stack_push(operatorStack, (void*)&expression[i]);
         }
         else{
-            queue_enqueue(outputQueue, &expression[i]);
+            queue_enqueue(outputQueue, (void*)&expression[i]);
         }
     }
 
@@ -130,33 +125,93 @@ char* expandIntervals(const char* er) {
     return resultado;
 }
 
+int requiresConcatRight(unsigned char c) {
+    if (c > 127) return 1; 
+    return (!isOperator(c) && c != '(' && c != ')') || c == ')' || c == '*' || c == '+' || c == '?' || c == '^';
+}
+
+int requiresConcatLeft(unsigned char c) {
+    if (c > 127) return 1; 
+    return (!isOperator(c) && c != '(' && c != ')') || c == '(';
+}
+
 char *ERpreProcess(char *expression){
-    char *output = malloc(sizeof(char) * strlen(expression) * 2);
-    output[0] = expression[0];
-    char lastChar = expression[0];
-    int i, j;
-    for(i = 1, j = 1; expression[i] != '\0'; i++, j++){
-        if(!isOperator(expression[i]) && expression[i] != '(' && expression[i] != ')'){
-            if(lastChar == '^' || lastChar == '+' || lastChar == ')'){
-                output[j++] = '&';
+    if (!expression || expression[0] == '\0') return NULL;
+
+    char *output = malloc(sizeof(char) * strlen(expression) * 2 + 1);
+    int j = 0;
+    
+    for(int i = 0; expression[i] != '\0'; i++){
+        unsigned char curr = expression[i];
+        
+        if (curr == '\\' && expression[i+1] != '\0') {
+            char next = expression[i+1];
+            
+            if (next == 'n') { curr = '\n'; i++; }
+            else if (next == 't') { curr = '\t'; i++; }
+            else if (next == 'r') { curr = '\r'; i++; }
+            else {
+                curr = next | 0x80; 
+                i++; 
             }
-            else if(!isOperator(lastChar) && lastChar != '(' && lastChar != ')'){
-                output[j++] = '&';
-            }
-        }   
-        else if(expression[i] == '('){
-            if((!isOperator(lastChar) && lastChar != '(' && lastChar != ')') || lastChar == ')' || lastChar == '+' || lastChar == '^'){
+        }
+        
+        if (j > 0) {
+            unsigned char prev = output[j-1];
+            if (requiresConcatRight(prev) && requiresConcatLeft(curr)) {
                 output[j++] = '&';
             }
         }
-
-        lastChar = expression[i];
-        output[j] = expression[i];
+        
+        output[j++] = curr;
     }
-
+    
     output[j] = '\0';
 
     char *final_output = shuntingYard(output);
     free(output);
+    
     return final_output;
+}
+
+ERTokenType string_to_token_type(const char *str) {
+    if (strcmp(str, "TOKEN_LPAREN") == 0) return TOKEN_LPAREN;
+    if (strcmp(str, "TOKEN_RPAREN") == 0) return TOKEN_RPAREN;
+    if (strcmp(str, "TOKEN_LBRACKET") == 0) return TOKEN_LBRACKET;
+    if (strcmp(str, "TOKEN_RBRACKET") == 0) return TOKEN_RBRACKET;
+    if (strcmp(str, "TOKEN_DOT") == 0) return TOKEN_DOT;
+    if (strcmp(str, "TOKEN_KW_EXPRESSION") == 0) return TOKEN_KW_EXPRESSION;
+    if (strcmp(str, "TOKEN_KW_MODULE_STAR") == 0) return TOKEN_KW_MODULE_STAR;
+    if (strcmp(str, "TOKEN_KW_MODULE") == 0) return TOKEN_KW_MODULE;
+    if (strcmp(str, "TOKEN_KW_PLAIN_MOD_BEGIN") == 0) return TOKEN_KW_PLAIN_MOD_BEGIN;
+    if (strcmp(str, "TOKEN_KW_BEGIN_FOR_SYNTAX") == 0) return TOKEN_KW_BEGIN_FOR_SYNTAX;
+    if (strcmp(str, "TOKEN_KW_BEGIN0") == 0) return TOKEN_KW_BEGIN0;
+    if (strcmp(str, "TOKEN_KW_BEGIN") == 0) return TOKEN_KW_BEGIN;
+    if (strcmp(str, "TOKEN_KW_PROVIDE") == 0) return TOKEN_KW_PROVIDE;
+    if (strcmp(str, "TOKEN_KW_DECLARE") == 0) return TOKEN_KW_DECLARE;
+    if (strcmp(str, "TOKEN_KW_DEFINE_VALUES") == 0) return TOKEN_KW_DEFINE_VALUES;
+    if (strcmp(str, "TOKEN_KW_DEFINE_SYNTAXES") == 0) return TOKEN_KW_DEFINE_SYNTAXES;
+    if (strcmp(str, "TOKEN_KW_REQUIRE") == 0) return TOKEN_KW_REQUIRE;
+    if (strcmp(str, "TOKEN_KW_PLAIN_LAMBDA") == 0) return TOKEN_KW_PLAIN_LAMBDA;
+    if (strcmp(str, "TOKEN_KW_CASE_LAMBDA") == 0) return TOKEN_KW_CASE_LAMBDA;
+    if (strcmp(str, "TOKEN_KW_IF") == 0) return TOKEN_KW_IF;
+    if (strcmp(str, "TOKEN_KW_LETREC_VALUES") == 0) return TOKEN_KW_LETREC_VALUES;
+    if (strcmp(str, "TOKEN_KW_LET_VALUES") == 0) return TOKEN_KW_LET_VALUES;
+    if (strcmp(str, "TOKEN_KW_SET") == 0) return TOKEN_KW_SET;
+    if (strcmp(str, "TOKEN_KW_QUOTE_SYNTAX") == 0) return TOKEN_KW_QUOTE_SYNTAX;
+    if (strcmp(str, "TOKEN_KW_QUOTE") == 0) return TOKEN_KW_QUOTE;
+    if (strcmp(str, "TOKEN_KW_LOCAL") == 0) return TOKEN_KW_LOCAL;
+    if (strcmp(str, "TOKEN_KW_WITH_CONT_MARK") == 0) return TOKEN_KW_WITH_CONT_MARK;
+    if (strcmp(str, "TOKEN_KW_PLAIN_APP") == 0) return TOKEN_KW_PLAIN_APP;
+    if (strcmp(str, "TOKEN_KW_TOP") == 0) return TOKEN_KW_TOP;
+    if (strcmp(str, "TOKEN_KW_VAR_REF") == 0) return TOKEN_KW_VAR_REF;
+    if (strcmp(str, "TOKEN_FALSE") == 0) return TOKEN_FALSE;
+    if (strcmp(str, "TOKEN_TRUE") == 0) return TOKEN_TRUE;
+    if (strcmp(str, "TOKEN_ID") == 0) return TOKEN_ID;
+    if (strcmp(str, "TOKEN_STRING") == 0) return TOKEN_STRING;
+    if (strcmp(str, "TOKEN_FLOAT") == 0) return TOKEN_FLOAT;
+    if (strcmp(str, "TOKEN_INT") == 0) return TOKEN_INT;
+    if (strcmp(str, "TOKEN_WHITESPACE") == 0) return TOKEN_WHITESPACE;
+
+    return TOKEN_EMPTY;
 }

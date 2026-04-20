@@ -2,3 +2,5 @@ main
 a.out
 .vscode/
 afd_serializado.bin
+compilador
+gerador_scanner
