@@ -7,23 +7,26 @@ typedef struct ParserContext
 {
     ERTokenType currentType;
     int currentIndex;
-    ERTokenType *tokens;
+    TokenList *tokens;
+    char **errorList;
+    int errorCount;
 } ParserContext;
 
-void error(char *message)
+void error(ParserContext *context, Token *token, const char *message)
 {
-    printf("Erro de Sintaxe: %s\n", message);
-    exit(1);
+    char *buffer = malloc(256);
+    sprintf(buffer, "Erro de Sintaxe na linha %d coluna %d, lexema '%s': %s\n", token->line, token->column, token->lexeme, message);
+    context->errorList[context->errorCount++] = buffer;
 }
 
 ERTokenType nextToken(ParserContext *context)
 {
-    return context->currentType = context->tokens[++context->currentIndex];
+    return context->currentType = context->tokens->tokens[++context->currentIndex].type;
 }
 
 ERTokenType peekToken(ParserContext *context)
 {
-    return context->tokens[context->currentIndex + 1];
+    return context->tokens->tokens[context->currentIndex + 1].type;
 }
 
 void match(ParserContext *context, ERTokenType expected)
@@ -34,7 +37,7 @@ void match(ParserContext *context, ERTokenType expected)
     }
     else
     {
-        error("Token inesperado");
+        error(context, &context->tokens->tokens[context->currentIndex], "Token inesperado");
     }
 }
 
@@ -485,58 +488,16 @@ TreeNode *expr(ParserContext *context)
     return node;
 }
 
-#define MAX_TOKENS 10000
-
-ERTokenType *read_tokens(const char *filename, size_t *out_size) {
-
-    FILE *f = fopen(filename, "r");
-    if (!f) return NULL;
-
-    ERTokenType *tokens = malloc(MAX_TOKENS * sizeof(ERTokenType));
-    size_t n = 0;
-
-    char line[4096];
-
-    while (fgets(line, sizeof(line), f)) {
-
-        int type;
-        int a, b, c;
-        char *p = line;
-
-        // ✔ lê os 4 números iniciais
-        if (sscanf(p, "%d %d %d %d", &type, &a, &b, &c) != 4)
-            continue;
-
-        // avança o ponteiro após os 4 números
-        for (int i = 0; i < 4; i++) {
-            while (*p == ' ' || *p == '\t') p++;
-            while (*p && *p != ' ' && *p != '\t') p++;
-        }
-
-        // pula espaços até o lexema
-        while (*p == ' ' || *p == '\t') p++;
-
-        // remove \n
-        char *end = strchr(p, '\n');
-        if (end) *end = '\0';
-
-        tokens[n] = (ERTokenType)type;
-
-        n++;
-    }
-
-    fclose(f);
-
-    *out_size = n;
-    return tokens;
-}
-
-TreeNode *parse(const char *filename)
+TreeNode *parse(TokenList *tokens, char **out_errors, size_t *out_size)
 {   
-    size_t size;
-    ERTokenType *tokens = read_tokens(filename, &size);
-    ParserContext context = {tokens[0], 0, tokens};
+    char *errorList[100]; // Suporte para até 100 erros (simplificação)
+    ParserContext context = {tokens->tokens[0].type, 0, tokens, errorList, 0};
     TreeNode *root = top_level_form(&context);
 
+    *out_size = context.errorCount;
+    for (int i = 0; i < context.errorCount; i++)
+    {
+        out_errors[i] = context.errorList[i];
+    }
     return root;
 }

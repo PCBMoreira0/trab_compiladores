@@ -23,6 +23,10 @@ int main() {
     if (fita) {
         print_token_list(fita);
         save_token_list_to_file(fita, "output.tks");
+
+        TokenList *loaded_fita = load_token_list_from_file("output.tks");
+        printf("\n[*] Tokens carregados de 'output.tks':\n");
+        print_token_list(loaded_fita);
         
         // Etapa de parsing (ainda temos q implementar)
 

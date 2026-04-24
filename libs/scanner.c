@@ -143,3 +143,47 @@ void save_token_list_to_file(TokenList *list, const char *filename) {
     fclose(f);
     printf("[+] Fita de tokens salva com sucesso em: %s\n", filename);
 }
+
+TokenList *load_token_list_from_file(const char *filename) {
+    FILE *f = fopen(filename, "r");
+    if (!f) {
+        printf("Erro ao abrir arquivo: %s\n", filename);
+        return NULL;
+    }
+
+    TokenList *list = malloc(sizeof(TokenList));
+    list->count = 0;
+    list->capacity = 16;
+    list->tokens = malloc(sizeof(Token) * list->capacity);
+
+    while (1) {
+        Token t;
+        size_t len;
+
+        // tenta ler os campos básicos
+        int read = fscanf(f, "%d %d %d %zu ", 
+                          (int*)&t.type, 
+                          &t.line, 
+                          &t.column, 
+                          &len);
+
+        if (read != 4) break;
+
+        t.lexeme = malloc(len + 1);
+
+        if (fscanf(f, "%s", t.lexeme) != 1) {
+            free(t.lexeme);
+            break;
+        }
+
+        if (list->count >= list->capacity) {
+            list->capacity *= 2;
+            list->tokens = realloc(list->tokens, sizeof(Token) * list->capacity);
+        }
+
+        list->tokens[list->count++] = t;
+    }
+
+    fclose(f);
+    return list;
+}

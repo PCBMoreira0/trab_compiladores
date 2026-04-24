@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "regular_expression.h"
+#include "../parser/parser.h"
 
 #define MAX_TOKENS 100
 
@@ -102,6 +103,66 @@ const char* get_token_name(ERTokenType type) {
         case TOKEN_WHITESPACE: return "TOKEN_WHITESPACE";
         case TOKEN_EOF: return "TOKEN_EOF";
         case TOKEN_EMPTY: return "TOKEN_EMPTY / UNKNOWN";
+
+        // --- AST nodes ---
+        case NODE_TOP_LEVEL:
+            return "NODE_TOP_LEVEL";
+        case NODE_EXPRESSION:
+            return "NODE_EXPRESSION";
+        case NODE_MODULE:
+            return "NODE_MODULE";
+        case NODE_MODULE_STAR:
+            return "NODE_MODULE_STAR";
+        case NODE_PLAIN_MODULE_BEGIN:
+            return "NODE_PLAIN_MODULE_BEGIN";
+        case NODE_BEGIN:
+            return "NODE_BEGIN";
+        case NODE_BEGIN_FOR_SYNTAX:
+            return "NODE_BEGIN_FOR_SYNTAX";
+        case NODE_PROVIDE:
+            return "NODE_PROVIDE";
+        case NODE_DECLARE:
+            return "NODE_DECLARE";
+        case NODE_DEFINE_VALUES:
+            return "NODE_DEFINE_VALUES";
+        case NODE_DEFINE_SYNTAXES:
+            return "NODE_DEFINE_SYNTAXES";
+        case NODE_REQUIRE:
+            return "NODE_REQUIRE";
+        case NODE_PLAIN_LAMBDA:
+            return "NODE_PLAIN_LAMBDA";
+        case NODE_CASE_LAMBDA:
+            return "NODE_CASE_LAMBDA";
+        case NODE_IF:
+            return "NODE_IF";
+        case NODE_BEGIN0:
+            return "NODE_BEGIN0";
+        case NODE_LET_VALUES:
+            return "NODE_LET_VALUES";
+        case NODE_LETREC_VALUES:
+            return "NODE_LETREC_VALUES";
+        case NODE_SET:
+            return "NODE_SET";
+        case NODE_QUOTE:
+            return "NODE_QUOTE";
+        case NODE_QUOTE_SYNTAX:
+            return "NODE_QUOTE_SYNTAX";
+        case NODE_WITH_CONT_MARK:
+            return "NODE_WITH_CONT_MARK";
+        case NODE_PLAIN_APP:
+            return "NODE_PLAIN_APP";
+        case NODE_TOP:
+            return "NODE_TOP";
+        case NODE_VAR_REF:
+            return "NODE_VAR_REF";
+        case NODE_ID:
+            return "NODE_ID";
+        case NODE_LITERAL:
+            return "NODE_LITERAL";
+        case NODE_FORMALS:
+            return "NODE_FORMALS";
+        case NODE_BINDING:
+            return "NODE_BINDING";
         default: return "OTHER_TOKEN";
     }
 }

@@ -7,3 +7,8 @@ gcc main_gerador.c libs/afn.c libs/linked_list.c libs/stack.c libs/value_stack.c
 gcc main_compilador.c libs/scanner.c libs/lex_parsing.c libs/regular_expression.c libs/afd.c libs/afn.c libs/linked_list.c libs/stack.c libs/value_stack.c libs/queue.c -o compilador -Wall -g
 
 ./compilador
+
+# Parser teste
+gcc parser_test.c libs/scanner.c libs/lex_parsing.c libs/regular_expression.c libs/afd.c libs/afn.c libs/linked_list.c libs/stack.c libs/value_stack.c libs/queue.c parser/parser.c libs/tree.c -Wall -g
+
+./a.out
