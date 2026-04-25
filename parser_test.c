@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include "parser/parser.h"
 #include "libs/lex_parsing.h"
+// Resolve o warning: passing argument 2 of 'print_tree' from incompatible pointer type (expected const char * int) but argument is of type const char* ERTokenType
+// enum e int vai ter o mesmo valor mas para o compilador são tipos diferentes quando usados em ponteiros de função.
+static const char *token_name_int(int t){
+    return get_token_name((ERTokenType)t);
+}
 
 int main()
 {
@@ -21,7 +26,7 @@ int main()
     {
 
         printf("Árvore Sintática (AST):\n");
-        print_tree(root, get_token_name);
+        print_tree(root, token_name_int);
     }
 
     free_tree(root);

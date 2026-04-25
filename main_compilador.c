@@ -3,7 +3,7 @@
 #include "libs/afd.h"
 #include "libs/scanner.h"
 
-int main() {
+int main(int argc, char* argv) {
     printf("[*] Iniciando o Compilador Racket...\n");
 
     printf("[*] Carregando a maquina de estados (afd_serializado.bin)...\n");
