@@ -31,10 +31,10 @@ int main(int argc, char **argv) {
         print_token_list(loaded_fita);
         
         // Etapa de parsing (ainda temos q implementar)
-
+        free_token_list(loaded_fita);
         free_token_list(fita);
     }
-    free_token_list(loaded_fita);
+    
     afdFree(dfa);
     return 0;
 }
