@@ -14,6 +14,7 @@ typedef struct ParserContext
 
 void error(ParserContext *context, Token *token, const char *message)
 {
+    if (context->errorCount >= 100) return;
     char *buffer = malloc(256);
     sprintf(buffer, "Erro de Sintaxe na linha %d coluna %d, lexema '%s': %s\n", token->line, token->column, token->lexeme, message);
     context->errorList[context->errorCount++] = buffer;
@@ -38,6 +39,7 @@ void match(ParserContext *context, ERTokenType expected)
     else
     {
         error(context, &context->tokens->tokens[context->currentIndex], "Token inesperado");
+        nextToken(context);
     }
 }
 
