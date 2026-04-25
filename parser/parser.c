@@ -496,6 +496,12 @@ TreeNode *parse(TokenList *tokens, char **out_errors, size_t *out_size)
     ParserContext context = {tokens->tokens[0].type, 0, tokens, errorList, 0};
     TreeNode *root = top_level_form(&context);
 
+    if (context.currentType != TOKEN_EOF)
+    {
+        error(&context, &context.tokens->tokens[context.currentIndex],
+              "Tokens extras apos o final do programa");
+    }
+
     *out_size = context.errorCount;
     for (int i = 0; i < context.errorCount; i++)
     {
