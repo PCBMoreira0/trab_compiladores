@@ -34,6 +34,7 @@ int main(int argc, char **argv) {
 
         free_token_list(fita);
     }
+    free_token_list(loaded_fita);
     afdFree(dfa);
     return 0;
 }
