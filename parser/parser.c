@@ -22,11 +22,13 @@ void error(ParserContext *context, Token *token, const char *message)
 
 ERTokenType nextToken(ParserContext *context)
 {
+    if (context->currentType == TOKEN_EOF) return TOKEN_EOF;
     return context->currentType = context->tokens->tokens[++context->currentIndex].type;
 }
 
 ERTokenType peekToken(ParserContext *context)
 {
+    if (context->currentType == TOKEN_EOF) return TOKEN_EOF;
     return context->tokens->tokens[context->currentIndex + 1].type;
 }
 
@@ -99,7 +101,7 @@ TreeNode *top_level_form(ParserContext *context)
             match(context, TOKEN_LPAREN);
             match(context, TOKEN_KW_PLAIN_MOD_BEGIN);
             TreeNode *body = create_node(NODE_PLAIN_MODULE_BEGIN);
-            while (context->currentType != TOKEN_RPAREN)
+            while (context->currentType != TOKEN_RPAREN && context->currentType != TOKEN_EOF)
             {
                 add_child(body, module_level_form(context));
             }
@@ -113,7 +115,7 @@ TreeNode *top_level_form(ParserContext *context)
             TreeNode *node = create_node(NODE_BEGIN);
             match(context, TOKEN_LPAREN);
             match(context, TOKEN_KW_BEGIN);
-            while (context->currentType != TOKEN_RPAREN)
+            while (context->currentType != TOKEN_RPAREN && context->currentType != TOKEN_EOF)
             {
                 add_child(node, top_level_form(context));
             }
@@ -125,7 +127,7 @@ TreeNode *top_level_form(ParserContext *context)
             TreeNode *node = create_node(NODE_BEGIN_FOR_SYNTAX);
             match(context, TOKEN_LPAREN);
             match(context, TOKEN_KW_BEGIN_FOR_SYNTAX);
-            while (context->currentType != TOKEN_RPAREN)
+            while (context->currentType != TOKEN_RPAREN && context->currentType != TOKEN_EOF)
             {
                 add_child(node, top_level_form(context));
             }
@@ -151,7 +153,7 @@ TreeNode *module_level_form(ParserContext *context)
             TreeNode *node = create_node(NODE_PROVIDE);
             match(context, TOKEN_LPAREN);
             match(context, TOKEN_KW_PROVIDE);
-            while (context->currentType != TOKEN_RPAREN)
+            while (context->currentType != TOKEN_RPAREN && context->currentType != TOKEN_EOF)
                 nextToken(context);
             match(context, TOKEN_RPAREN);
             return node;
@@ -161,7 +163,7 @@ TreeNode *module_level_form(ParserContext *context)
             TreeNode *node = create_node(NODE_BEGIN_FOR_SYNTAX);
             match(context, TOKEN_LPAREN);
             match(context, TOKEN_KW_BEGIN_FOR_SYNTAX);
-            while (context->currentType != TOKEN_RPAREN)
+            while (context->currentType != TOKEN_RPAREN && context->currentType != TOKEN_EOF)
             {
                 add_child(node, module_level_form(context));
             }
@@ -173,7 +175,7 @@ TreeNode *module_level_form(ParserContext *context)
             TreeNode *node = create_node(NODE_DECLARE);
             match(context, TOKEN_LPAREN);
             match(context, TOKEN_KW_DECLARE);
-            while (context->currentType != TOKEN_RPAREN)
+            while (context->currentType != TOKEN_RPAREN && context->currentType != TOKEN_EOF)
                 nextToken(context);
             match(context, TOKEN_RPAREN);
             return node;
@@ -220,7 +222,7 @@ TreeNode *submodule_form(ParserContext *context)
     match(context, TOKEN_LPAREN);
     match(context, TOKEN_KW_PLAIN_MOD_BEGIN);
     TreeNode *body = create_node(NODE_PLAIN_MODULE_BEGIN);
-    while (context->currentType != TOKEN_RPAREN)
+    while (context->currentType != TOKEN_RPAREN && context->currentType != TOKEN_EOF)
     {
         add_child(body, module_level_form(context));
     }
@@ -262,7 +264,7 @@ TreeNode *general_top_level_form(ParserContext *context)
             TreeNode *node = create_node(NODE_REQUIRE);
             match(context, TOKEN_LPAREN);
             match(context, TOKEN_KW_REQUIRE);
-            while (context->currentType != TOKEN_RPAREN)
+            while (context->currentType != TOKEN_RPAREN && context->currentType != TOKEN_EOF)
                 nextToken(context);
             match(context, TOKEN_RPAREN);
             return node;
@@ -330,7 +332,7 @@ TreeNode *expr(ParserContext *context)
         do
         {
             add_child(node, expr(context));
-        } while (context->currentType != TOKEN_RPAREN);
+        } while (context->currentType != TOKEN_RPAREN && context->currentType != TOKEN_EOF);
         break;
 
     case TOKEN_KW_CASE_LAMBDA:
@@ -344,7 +346,7 @@ TreeNode *expr(ParserContext *context)
             do
             {
                 add_child(clause, expr(context));
-            } while (context->currentType != TOKEN_RPAREN);
+            } while (context->currentType != TOKEN_RPAREN && context->currentType != TOKEN_EOF);
             match(context, TOKEN_RPAREN);
             add_child(node, clause);
         }
@@ -365,7 +367,7 @@ TreeNode *expr(ParserContext *context)
         do
         {
             add_child(node, expr(context));
-        } while (context->currentType != TOKEN_RPAREN);
+        } while (context->currentType != TOKEN_RPAREN && context->currentType != TOKEN_EOF);
         break;
 
     case TOKEN_KW_LET_VALUES:
@@ -402,7 +404,7 @@ TreeNode *expr(ParserContext *context)
         do
         {
             add_child(node, expr(context));
-        } while (context->currentType != TOKEN_RPAREN);
+        } while (context->currentType != TOKEN_RPAREN && context->currentType != TOKEN_EOF);
         break;
 
     case TOKEN_KW_SET:
@@ -472,14 +474,14 @@ TreeNode *expr(ParserContext *context)
         do
         {
             add_child(node, expr(context));
-        } while (context->currentType != TOKEN_RPAREN);
+        } while (context->currentType != TOKEN_RPAREN && context->currentType != TOKEN_EOF);
         break;
 
     default:
         // Aplicação normal (quando não tem palavra-chave do Racket, ex: (foo 1 2))
         node = create_node(NODE_PLAIN_APP); // Trata como aplicação
         // Como consumimos o '(' mas não era palavra chave, a currentType ainda é a cabeça da função.
-        while (context->currentType != TOKEN_RPAREN)
+        while (context->currentType != TOKEN_RPAREN && context->currentType != TOKEN_EOF)
         {
             add_child(node, expr(context));
         }
